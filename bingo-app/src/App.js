@@ -204,14 +204,21 @@ export default function Bingo() {
               marked[index] ? "bg-green-500" : "bg-white hover:bg-gray-100"
             }`}
           >
-            <div className="flex items-center justify-center h-20 cursor-pointer">
+            <div className="flex items-center justify-center h-20 cursor-pointer relative">
               {champ ? (
-                <img
-                  src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
-                  alt={champ}
-                  className="w-12 h-12 rounded-full"
-                onError={(e) => e.target.src = 'https://via.placeholder.com/48'}
-                />
+                <>
+                  <img
+                    src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
+                    alt={champ}
+                    className="w-12 h-12 rounded-full"
+                    onError={(e) => e.target.src = 'https://via.placeholder.com/48'}
+                  />
+                  {marked[index] && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <span className="text-red-600 text-4xl font-bold">X</span>
+                    </div>
+                  )}
+                </>
               ) : "?"}
             </div>
           </Card>
