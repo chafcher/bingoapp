@@ -36,6 +36,7 @@ export default function Bingo() {
   const [marked, setMarked] = useState(Array(4 * 4).fill(false));
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [currentPosition, setCurrentPosition] = useState(0);
   const searchInputRef = useRef(null);
 
   useEffect(() => {
@@ -46,9 +47,21 @@ export default function Bingo() {
   const handleSelectChamp = (champ) => {
     if (selectedChamps.includes(champ)) {
       setSelectedChamps((prev) => prev.filter(c => c !== champ));
-    } else {
-      setSelectedChamps((prev) => [...prev, champ]);
+      return;
     }
+
+    if (currentPosition >= gridSize * gridSize) {
+      alert('Grid is full! Please randomize or clear the grid.');
+      return;
+    }
+
+    setSelectedChamps((prev) => [...prev, champ]);
+    setGrid((prevGrid) => {
+      const newGrid = [...prevGrid];
+      newGrid[currentPosition] = champ;
+      return newGrid;
+    });
+    setCurrentPosition((prev) => prev + 1);
   };
 
   const randomizeGrid = () => {
@@ -57,10 +70,11 @@ export default function Bingo() {
       return;
     }
     const shuffled = [...selectedChamps].sort(() => Math.random() - 0.5);
-    const newGrid = shuffled.slice(0, gridSize * gridSize);
-    setGrid(newGrid);
+    setGrid(shuffled.slice(0, gridSize * gridSize));
     setMarked(Array(gridSize * gridSize).fill(false));
+    setCurrentPosition(gridSize * gridSize);
   };
+
 
   const handleMark = (index) => {
     setMarked((prev) => {
