@@ -38,8 +38,11 @@
     ]
   },
   "devDependencies": {
-    "autoprefixer": "^10.4.20",
+    "@tailwindcss/postcss": "^4.0.6",
+    "@tailwindcss/postcss7-compat": "^2.2.17",
+    "autoprefixer": "^9.8.8",
     "postcss": "^8.5.2",
+    "postcss-loader": "^8.1.1",
     "tailwindcss": "^4.0.6"
   }
 }

@@ -1,12 +1,30 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
+import Modal from "./components/ui/Modal";
 import { motion } from "framer-motion";
 
 
 const allChampions = [
-  "Ahri", "Zed", "LeeSin", "Jinx", "Thresh", "Yasuo", "Vayne", "Riven",
-  "Darius", "LeBlanc", "Orianna", "KhaZix", "Ashe", "Renekton", "Ezreal", "Lulu"
+  "Ahri", "Akali", "Akshan", "Alistar", "Amumu", "Anivia", "Annie", "Aphelios",
+  "Ashe", "AurelionSol", "Azir", "Bard", "Blitzcrank", "Brand", "Braum", "Caitlyn",
+  "Camille", "Cassiopeia", "ChoGath", "Corki", "Darius", "Diana", "Draven", "DrMundo",
+  "Ekko", "Elise", "Evelynn", "Ezreal", "Fiddlesticks", "Fiora", "Fizz", "Galio",
+  "Gangplank", "Garen", "Gnar", "Gragas", "Graves", "Hecarim", "Heimerdinger", "Illaoi",
+  "Irelia", "Ivern", "Janna", "JarvanIV", "Jax", "Jayce", "Jhin", "Jinx", "KaiSa",
+  "Kalista", "Karma", "Karthus", "Kassadin", "Katarina", "Kayle", "Kayn", "Kennen",
+  "KhaZix", "Kindred", "Kled", "KogMaw", "LeBlanc", "LeeSin", "Leona", "Lillia",
+  "Lissandra", "Lucian", "Lulu", "Lux", "Malphite", "Malzahar", "Maokai", "MasterYi",
+  "MissFortune", "Mordekaiser", "Morgana", "Nami", "Nasus", "Nautilus", "Neeko", "Nidalee",
+  "Nocturne", "Nunu", "Olaf", "Orianna", "Ornn", "Pantheon", "Poppy", "Pyke", "Qiyana",
+  "Quinn", "Rakan", "Rammus", "RekSai", "Rell", "Renekton", "Rengar", "Riven", "Rumble",
+  "Ryze", "Samira", "Sejuani", "Senna", "Seraphine", "Sett", "Shaco", "Shen", "Shyvana",
+  "Singed", "Sion", "Sivir", "Skarner", "Sona", "Soraka", "Swain", "Sylas", "Syndra",
+  "TahmKench", "Taliyah", "Talon", "Taric", "Teemo", "Thresh", "Tristana", "Trundle",
+  "Tryndamere", "TwistedFate", "Twitch", "Udyr", "Urgot", "Varus", "Vayne", "Veigar",
+  "VelKoz", "Vi", "Viego", "Viktor", "Vladimir", "Volibear", "Warwick", "Wukong",
+  "Xayah", "Xerath", "XinZhao", "Yasuo", "Yone", "Yorick", "Yuumi", "Zac", "Zed",
+  "Ziggs", "Zilean", "Zoe", "Zyra"
 ];
 
 const gridSizes = [4, 5, 6];
@@ -17,6 +35,8 @@ export default function Bingo() {
   const [grid, setGrid] = useState(Array(4 * 4).fill(null));
   const [marked, setMarked] = useState(Array(4 * 4).fill(false));
   const [search, setSearch] = useState("");
+  const [showModal, setShowModal] = useState(false);
+  const searchInputRef = useRef(null);
 
   useEffect(() => {
     setGrid(Array(gridSize * gridSize).fill(null));
@@ -24,14 +44,22 @@ export default function Bingo() {
   }, [gridSize]);
 
   const handleSelectChamp = (champ) => {
-    if (selectedChamps.includes(champ)) return;
-    setSelectedChamps((prev) => [...prev, champ]);
+    if (selectedChamps.includes(champ)) {
+      setSelectedChamps((prev) => prev.filter(c => c !== champ));
+    } else {
+      setSelectedChamps((prev) => [...prev, champ]);
+    }
   };
 
   const randomizeGrid = () => {
-    if (selectedChamps.length < gridSize * gridSize) return;
+    if (selectedChamps.length < gridSize * gridSize) {
+      alert(`Please select at least ${gridSize * gridSize} champions`);
+      return;
+    }
     const shuffled = [...selectedChamps].sort(() => Math.random() - 0.5);
-    setGrid(shuffled.slice(0, gridSize * gridSize));
+    const newGrid = shuffled.slice(0, gridSize * gridSize);
+    setGrid(newGrid);
+    setMarked(Array(gridSize * gridSize).fill(false));
   };
 
   const handleMark = (index) => {
@@ -67,30 +95,80 @@ export default function Bingo() {
           <Button key={size} onClick={() => setGridSize(size)}>{size}x{size}</Button>
         ))}
       </div>
-      <input
-        type="text"
-        placeholder="Search for a champion..."
-        className="border border-gray-300 rounded-lg p-3 w-full max-w-md focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-        value={search}
-        onChange={(e) => setSearch(e.target.value)}
-      />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 w-full max-w-4xl mb-6">
-        {allChampions.filter(champ => champ.toLowerCase().includes(search.toLowerCase())).map((champ) => (
-          <Button 
-            key={champ} 
-            onClick={() => handleSelectChamp(champ)}
-            className="flex items-center justify-center gap-2 w-full"
-          >
-            <img
-              src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
-              alt={champ}
-              className="w-8 h-8 rounded-full"
-              onError={(e) => e.target.src = 'https://via.placeholder.com/32'}
-            />
-            <span className="text-sm">{champ}</span>
-          </Button>
-        ))}
+      <div className="w-full max-w-md mb-6 relative">
+        <input
+          type="text"
+          placeholder="Search for a champion..."
+          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && search) {
+              const filtered = allChampions.filter(champ => 
+                champ.toLowerCase().includes(search.toLowerCase())
+              );
+              if (filtered.length > 0) {
+                handleSelectChamp(filtered[0]);
+                setSearch('');
+              }
+            }
+          }}
+          ref={searchInputRef}
+        />
+        {search && (
+          <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto">
+            {allChampions
+              .filter(champ => champ.toLowerCase().includes(search.toLowerCase()))
+              .map((champ) => (
+                <div
+                  key={champ}
+                  className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                  onClick={() => {
+                    handleSelectChamp(champ);
+                    setSearch('');
+                    searchInputRef.current.focus();
+                  }}
+                >
+                  <img
+                    src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
+                    alt={champ}
+                    className="w-6 h-6 rounded-full"
+                    onError={(e) => e.target.src = 'https://via.placeholder.com/24'}
+                  />
+                  <span className="text-sm">{champ}</span>
+                </div>
+              ))}
+          </div>
+        )}
       </div>
+      <Button 
+        onClick={() => setShowModal(true)}
+        className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg mb-6"
+      >
+        Show Champions
+      </Button>
+      <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {allChampions.map((champ) => (
+            <Button 
+              key={champ} 
+              onClick={() => {
+                handleSelectChamp(champ);
+                setShowModal(false);
+              }}
+              className="flex items-center justify-center gap-2 w-full"
+            >
+              <img
+                src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
+                alt={champ}
+                className="w-8 h-8 rounded-full"
+                onError={(e) => e.target.src = 'https://via.placeholder.com/32'}
+              />
+              <span className="text-sm">{champ}</span>
+            </Button>
+          ))}
+        </div>
+      </Modal>
       <Button 
         onClick={randomizeGrid} 
         className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg mb-6"
