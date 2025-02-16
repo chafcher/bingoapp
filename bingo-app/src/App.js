@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Cookies from 'js-cookie';
 import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
@@ -6,12 +7,51 @@ import Switch from "./components/ui/Switch";
 import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
 import Modal from "./components/ui/Modal";
+// State management utilities
+const STORAGE_KEY = 'bingoState';
+
+const saveState = (state) => {
+  try {
+    const serializedState = JSON.stringify(state);
+    // Save to both localStorage and cookies for redundancy
+    localStorage.setItem(STORAGE_KEY, serializedState);
+    Cookies.set(STORAGE_KEY, serializedState, { 
+      expires: 7,
+      path: '/',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict'
+    });
+  } catch (error) {
+    console.error('Error saving state:', error);
+  }
+};
+
+const loadState = () => {
+  try {
+    // Try localStorage first
+    let savedState = localStorage.getItem(STORAGE_KEY);
+    
+    // If not in localStorage, try cookies
+    if (!savedState) {
+      savedState = Cookies.get(STORAGE_KEY);
+    }
+    
+    if (!savedState) {
+      return null;
+    }
+    
+    return JSON.parse(savedState);
+  } catch (error) {
+    console.error('Error loading state:', error);
+    return null;
+  }
+};
+
 
 const PHASE = {
   SELECTION: 'selection',
   PLAYING: 'playing'
 };
-
 
 const allChampions = [
   "Aatrox", "Ahri", "Akali", "Akshan", "Alistar", "Ambessa", "Amumu", "Anivia", "Annie", "Aphelios",
@@ -55,10 +95,12 @@ export default function Bingo() {
 
   // Load saved state on initial render
   useEffect(() => {
-    console.log('Attempting to load state from localStorage');
-    const savedState = localStorage.getItem('bingoState');
+    console.log('Attempting to load state from cookies');
+    const savedState = Cookies.get('bingoState', { path: '/' });
+    console.log('Retrieved cookie:', savedState);
     if (savedState) {
       console.log('Found saved state:', savedState);
+      console.log('Cookie size:', savedState.length, 'bytes');
       try {
         const state = JSON.parse(savedState);
         console.log('Parsed state:', state);
@@ -68,11 +110,20 @@ export default function Bingo() {
         
         // Then initialize other state based on grid size
         const size = state.gridSize || 5;
-        setGrid(state.grid || Array(size * size).fill(null));
-        setMarked(state.marked || Array(size * size).fill(false));
+        const initialGrid = state.grid || Array(size * size).fill(null);
+        const initialMarked = state.marked || Array(size * size).fill(false);
+        
+        setGrid(initialGrid);
+        setMarked(initialMarked);
         setSelectedChamps(state.selectedChamps || []);
-        setCurrentPosition(state.grid ? state.grid.length - state.grid.filter(x => x === null).length : 0);
+        setCurrentPosition(initialGrid.filter(x => x !== null).length);
         setPhase(state.phase || PHASE.SELECTION);
+        
+        // Force UI update after state is loaded
+        setTimeout(() => {
+          setGrid([...initialGrid]);
+          setMarked([...initialMarked]);
+        }, 0);
         
         console.log('State successfully loaded');
       } catch (error) {
@@ -85,25 +136,23 @@ export default function Bingo() {
       setMarked(Array(gridSize * gridSize).fill(false));
     }
     setIsLoading(false);
-  }, []);
+  }, [gridSize]);
 
   // Save state whenever it changes
   useEffect(() => {
-    console.log('Saving state to localStorage');
-    const state = {
-      grid,
-      marked,
-      selectedChamps,
-      gridSize,
-      phase
-    };
-    try {
-      localStorage.setItem('bingoState', JSON.stringify(state));
-      console.log('State successfully saved:', state);
-    } catch (error) {
-      console.error('Error saving state:', error);
+    if (!isLoading) {  // Only save after initial load
+      const state = {
+        grid,
+        marked,
+        selectedChamps,
+        gridSize,
+        phase,
+        currentPosition
+      };
+      saveState(state);
     }
-  }, [grid, marked, selectedChamps, gridSize, phase]);
+  }, [grid, marked, selectedChamps, gridSize, phase, currentPosition, isLoading]);
+
 
   const handleSelectChamp = (champ) => {
     if (currentPosition >= gridSize * gridSize) {
