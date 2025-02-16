@@ -38,13 +38,14 @@ const allChampions = [
 const gridSizes = [5, 6, 7, 8];
 
 export default function Bingo() {
+  const [isLoading, setIsLoading] = useState(true);
   const [gridSize, setGridSize] = useState(5);
   const [phase, setPhase] = useState(PHASE.SELECTION);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
   const [selectedChamps, setSelectedChamps] = useState([]);
-  const [grid, setGrid] = useState(Array(5 * 5).fill(null));
-  const [marked, setMarked] = useState(Array(5 * 5).fill(false));
+  const [grid, setGrid] = useState(Array(gridSize * gridSize).fill(null));
+  const [marked, setMarked] = useState(Array(gridSize * gridSize).fill(false));
   const [search, setSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
@@ -52,10 +53,57 @@ export default function Bingo() {
   const [currentPosition, setCurrentPosition] = useState(0);
   const searchInputRef = useRef(null);
 
+  // Load saved state on initial render
   useEffect(() => {
-    setGrid(Array(gridSize * gridSize).fill(null));
-    setMarked(Array(gridSize * gridSize).fill(false));
-  }, [gridSize]);
+    console.log('Attempting to load state from localStorage');
+    const savedState = localStorage.getItem('bingoState');
+    if (savedState) {
+      console.log('Found saved state:', savedState);
+      try {
+        const state = JSON.parse(savedState);
+        console.log('Parsed state:', state);
+        
+        // Initialize grid size first
+        setGridSize(state.gridSize || 5);
+        
+        // Then initialize other state based on grid size
+        const size = state.gridSize || 5;
+        setGrid(state.grid || Array(size * size).fill(null));
+        setMarked(state.marked || Array(size * size).fill(false));
+        setSelectedChamps(state.selectedChamps || []);
+        setCurrentPosition(state.grid ? state.grid.length - state.grid.filter(x => x === null).length : 0);
+        setPhase(state.phase || PHASE.SELECTION);
+        
+        console.log('State successfully loaded');
+      } catch (error) {
+        console.error('Error loading state:', error);
+      }
+    } else {
+      console.log('No saved state found');
+      // Initialize default state
+      setGrid(Array(gridSize * gridSize).fill(null));
+      setMarked(Array(gridSize * gridSize).fill(false));
+    }
+    setIsLoading(false);
+  }, []);
+
+  // Save state whenever it changes
+  useEffect(() => {
+    console.log('Saving state to localStorage');
+    const state = {
+      grid,
+      marked,
+      selectedChamps,
+      gridSize,
+      phase
+    };
+    try {
+      localStorage.setItem('bingoState', JSON.stringify(state));
+      console.log('State successfully saved:', state);
+    } catch (error) {
+      console.error('Error saving state:', error);
+    }
+  }, [grid, marked, selectedChamps, gridSize, phase]);
 
   const handleSelectChamp = (champ) => {
     if (currentPosition >= gridSize * gridSize) {
@@ -187,6 +235,8 @@ export default function Bingo() {
   };
 
   const checkBingo = () => {
+    if (!marked.length) return false;
+    
     const size = gridSize;
     let bingo = false;
 
@@ -202,6 +252,12 @@ export default function Bingo() {
 
     return bingo;
   };
+
+  if (isLoading) {
+    return <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center justify-center">
+      <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
+    </div>;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
@@ -268,10 +324,10 @@ export default function Bingo() {
                   }}
                 >
                   <img
-                    src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
+                    src={`/out/${champ}.png`}
                     alt={champ}
                     className="w-6 h-6 rounded-full"
-                    onError={(e) => e.target.src = 'https://via.placeholder.com/24'}
+                    onError={(e) => e.target.src = '/fallback-champion-icon.png'}
                   />
                   <span className="text-sm">{champ}</span>
                 </div>
@@ -296,12 +352,13 @@ export default function Bingo() {
               }}
               className="flex items-center justify-center gap-2 w-full"
             >
-              <img
-                src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
-                alt={champ}
-                className="w-8 h-8 rounded-full"
-                onError={(e) => e.target.src = 'https://via.placeholder.com/32'}
-              />
+                  <img 
+                    src={`/out/${champ}.png`}
+                    alt={champ}
+                    className="w-8 h-8 rounded-full"
+                    onError={(e) => e.target.src = '/fallback-champion-icon.png'}
+                  />
+
               <span className="text-sm">{champ}</span>
             </Button>
           ))}
@@ -321,13 +378,18 @@ export default function Bingo() {
           </Button>
         </Tooltip>
         <Tooltip 
-          content="Instantly fill grid with random champions (no duplicates)"
+          content="Instantly fill grid with random champions"
         >
           <Button 
             onClick={() => {
-              const shuffled = [...allChampions]
+              // Create a set of unique champions
+              const uniqueChamps = [...new Set(allChampions)];
+              
+              // Shuffle and select the required number of unique champions
+              const shuffled = uniqueChamps
                 .sort(() => Math.random() - 0.5)
                 .slice(0, gridSize * gridSize);
+                
               setGrid(shuffled);
               setSelectedChamps(shuffled);
               setCurrentPosition(gridSize * gridSize);
@@ -346,6 +408,7 @@ export default function Bingo() {
               setGrid(Array(gridSize * gridSize).fill(null));
               setSelectedChamps([]);
               setCurrentPosition(0);
+              localStorage.removeItem('bingoState');
             }}
             className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg"
             disabled={selectedChamps.length === 0}
@@ -372,10 +435,10 @@ export default function Bingo() {
               {champ ? (
                 <>
                   <img
-                    src={`https://ddragon.leagueoflegends.com/cdn/13.1.1/img/champion/${champ}.png`}
+                    src={`/out/${champ}.png`}
                     alt={champ}
                     className="w-12 h-12 rounded-full"
-                    onError={(e) => e.target.src = 'https://via.placeholder.com/48'}
+                    onError={(e) => e.target.src = '/fallback-champion-icon.png'}
                   />
                   {marked[index] && (
                     <div className="absolute inset-0 flex items-center justify-center">
@@ -406,6 +469,7 @@ export default function Bingo() {
             },
             variant: 'danger'
           }
+
         ]}
       >
         <p>Are you sure you want to remove this champion?</p>
