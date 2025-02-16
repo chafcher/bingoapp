@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
 import Switch from "./components/ui/Switch";
@@ -261,6 +262,7 @@ export default function Bingo() {
                 }`}
                   onClick={() => {
                     handleSelectChamp(champ);
+                    setToastMessage(`${champ} is added to the grid`);
                     setSearch('');
                     searchInputRef.current.focus();
                   }}
@@ -305,13 +307,53 @@ export default function Bingo() {
           ))}
         </div>
       </Modal>
-      <Button 
-        onClick={randomizeGrid} 
-        className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg mb-6"
-        disabled={selectedChamps.length < gridSize * gridSize}
-      >
-        Randomize Grid
-      </Button>
+      <div className="flex gap-3 mb-6">
+        <Tooltip 
+          content="Grid must be full to randomize."
+          show={selectedChamps.length < gridSize * gridSize}
+        >
+          <Button 
+            onClick={randomizeGrid} 
+            className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg"
+            disabled={selectedChamps.length < gridSize * gridSize}
+          >
+            Randomize Grid
+          </Button>
+        </Tooltip>
+        <Tooltip 
+          content="Instantly fill grid with random champions (no duplicates)"
+        >
+          <Button 
+            onClick={() => {
+              const shuffled = [...allChampions]
+                .sort(() => Math.random() - 0.5)
+                .slice(0, gridSize * gridSize);
+              setGrid(shuffled);
+              setSelectedChamps(shuffled);
+              setCurrentPosition(gridSize * gridSize);
+            }}
+            className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg"
+          >
+            Random Grid
+          </Button>
+        </Tooltip>
+        <Tooltip 
+          content="Grid must have at least one champion selected to clear."
+          show={selectedChamps.length === 0}
+        >
+          <Button 
+            onClick={() => {
+              setGrid(Array(gridSize * gridSize).fill(null));
+              setSelectedChamps([]);
+              setCurrentPosition(0);
+            }}
+            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg"
+            disabled={selectedChamps.length === 0}
+          >
+            Clear Grid
+          </Button>
+        </Tooltip>
+      </div>
       <div
         className={`grid gap-3 w-full max-w-4xl`}
         style={{
@@ -369,12 +411,14 @@ export default function Bingo() {
         <p>Are you sure you want to remove this champion?</p>
       </Modal>
 
-      {toastMessage && (
-        <Toast 
-          message={toastMessage} 
-          onClose={() => setToastMessage(null)}
-        />
-      )}
+      <div className="fixed inset-0 pointer-events-none">
+        {toastMessage && (
+          <Toast 
+            message={toastMessage} 
+            onClose={() => setToastMessage(null)}
+          />
+        )}
+      </div>
       {checkBingo() && (
         <motion.div 
           initial={{ scale: 0 }}

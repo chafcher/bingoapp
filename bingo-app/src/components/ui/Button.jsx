@@ -1,10 +1,15 @@
-export default function Button({ children, className, onClick }) {
+const Button = ({ children, className = '', disabled, ...props }) => {
   return (
-    <button 
-      className={`bg-blue-500 text-white px-4 py-2 rounded-md hover:bg-blue-600 transition-colors ${className}`}
-      onClick={onClick}
+    <button
+      className={`px-4 py-2 rounded transition-all ${
+        disabled ? 'bg-gray-300 cursor-not-allowed' : ''
+      } ${className}`}
+      disabled={disabled}
+      {...props}
     >
       {children}
     </button>
   );
-}
+};
+
+export default Button;
