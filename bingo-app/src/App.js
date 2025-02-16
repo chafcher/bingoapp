@@ -27,7 +27,7 @@ const allChampions = [
   "Ziggs", "Zilean", "Zoe", "Zyra"
 ];
 
-const gridSizes = [4, 5, 6];
+const gridSizes = [5, 6, 7, 8];
 
 export default function Bingo() {
   const [gridSize, setGridSize] = useState(4);
