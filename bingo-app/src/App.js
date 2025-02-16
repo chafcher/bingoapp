@@ -32,8 +32,8 @@ const gridSizes = [5, 6, 7, 8];
 export default function Bingo() {
   const [gridSize, setGridSize] = useState(5);
   const [selectedChamps, setSelectedChamps] = useState([]);
-  const [grid, setGrid] = useState(Array(4 * 4).fill(null));
-  const [marked, setMarked] = useState(Array(4 * 4).fill(false));
+  const [grid, setGrid] = useState(Array(5 * 5).fill(null));
+  const [marked, setMarked] = useState(Array(5 * 5).fill(false));
   const [search, setSearch] = useState("");
   const [showModal, setShowModal] = useState(false);
   const [currentPosition, setCurrentPosition] = useState(0);
