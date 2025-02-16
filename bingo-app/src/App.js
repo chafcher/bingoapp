@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from "react";
 import Cookies from 'js-cookie';
-import Sidebar from "./components/Sidebar";
 import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
@@ -8,6 +7,8 @@ import Switch from "./components/ui/Switch";
 import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
 import Modal from "./components/ui/Modal";
+import Sidebar from "./components/Sidebar";
+import ChampionsSidebar from "./components/ChampionsSidebar";
 
 // State management utilities
 const STORAGE_KEY = 'bingoState';
@@ -72,7 +73,7 @@ export default function Bingo() {
   const [marked, setMarked] = useState(Array(gridSize * gridSize).fill(false));
   const [search, setSearch] = useState("");
   const [highlightedIndex, setHighlightedIndex] = useState(0);
-  const [showModal, setShowModal] = useState(false);
+  const [showChampionsSidebar, setShowChampionsSidebar] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [currentPosition, setCurrentPosition] = useState(0);
   const searchInputRef = useRef(null);
@@ -81,33 +82,18 @@ export default function Bingo() {
   useEffect(() => {
     console.log('Attempting to load state from cookies');
     const savedState = Cookies.get('bingoState');
-    console.log('Retrieved cookie:', savedState);
     if (savedState) {
-      console.log('Found saved state:', savedState);
-      console.log('Cookie size:', savedState.length, 'bytes');
       try {
         const state = JSON.parse(savedState);
-        console.log('Parsed state:', state);
-        
-        // Initialize grid size first
-        setGridSize(state.gridSize || 5);
-        
-        // Then initialize other state based on grid size
         const size = state.gridSize || 5;
-        const initialGrid = state.grid || Array(size * size).fill(null);
-        const initialMarked = state.marked || Array(size * size).fill(false);
         
-        setGrid(initialGrid);
-        setMarked(initialMarked);
+        // Initialize all state at once
+        setGridSize(size);
+        setGrid(state.grid || Array(size * size).fill(null));
+        setMarked(state.marked || Array(size * size).fill(false));
         setSelectedChamps(state.selectedChamps || []);
-        setCurrentPosition(initialGrid.filter(x => x !== null).length);
+        setCurrentPosition(state.currentPosition || 0);
         setPhase(state.phase || PHASE.SELECTION);
-        
-        // Force UI update after state is loaded
-        setTimeout(() => {
-          setGrid([...initialGrid]);
-          setMarked([...initialMarked]);
-        }, 0);
         
         console.log('State successfully loaded');
       } catch (error) {
@@ -116,11 +102,12 @@ export default function Bingo() {
     } else {
       console.log('No saved state found');
       // Initialize default state
-      setGrid(Array(gridSize * gridSize).fill(null));
-      setMarked(Array(gridSize * gridSize).fill(false));
+      setGrid(Array(5 * 5).fill(null));
+      setMarked(Array(5 * 5).fill(false));
     }
     setIsLoading(false);
-  }, [gridSize]);
+  }, []);
+
 
   // Save state whenever it changes
   useEffect(() => {
@@ -351,12 +338,21 @@ export default function Bingo() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-gray-50 flex">
       <Sidebar 
         activeGridSize={activeGridSize}
         onGridSizeChange={handleGridSizeChange}
       />
-      <div className="flex-1 p-6 flex flex-col items-center">
+      <div className="flex-1 p-6 flex flex-col items-center relative">
+        <button
+          onClick={() => setShowChampionsSidebar(!showChampionsSidebar)}
+          className="fixed top-4 right-4 p-2 bg-primary hover:bg-secondary text-white rounded-lg shadow-md z-50"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
         <h1 className="text-3xl font-bold text-gray-800 mb-6">Fearless Draft Bingo</h1>
         <div className="flex items-center gap-3 mb-6">
           <span className="text-sm font-medium">Selection Phase</span>
@@ -434,34 +430,7 @@ export default function Bingo() {
             </div>
           )}
         </div>
-        <Button 
-          onClick={() => setShowModal(true)}
-          className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg mb-6"
-        >
-          Show Champions
-        </Button>
-        <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {allChampions.map((champ) => (
-              <Button 
-                key={champ} 
-                onClick={() => {
-                  handleSelectChamp(champ);
-                  setToastMessage(`${champ} is added to the grid`);
-                }}
-                className="flex items-center justify-center gap-2 w-full"
-              >
-                <img 
-                  src={`/out/${champ}.png`}
-                  alt={champ}
-                  className="w-8 h-8 rounded-full"
-                  onError={(e) => e.target.src = '/fallback-champion-icon.png'}
-                />
-                <span className="text-sm">{champ}</span>
-              </Button>
-            ))}
-          </div>
-        </Modal>
+
         <div className="flex gap-3 mb-6">
           <Tooltip 
             content="Grid must be full to randomize."
@@ -582,6 +551,13 @@ export default function Bingo() {
           </motion.div>
         )}
       </div>
-    </div> 
+      <ChampionsSidebar
+        isOpen={showChampionsSidebar}
+        onClose={() => setShowChampionsSidebar(false)}
+        allChampions={allChampions}
+        handleSelectChamp={handleSelectChamp}
+      />
+    </div>
+
   );
 }
