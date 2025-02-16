@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 
 const gridSizes = [5, 6, 7, 8];
 
-export default function Sidebar({ activeGridSize, onGridSizeChange }) {
+export default function HistorySidebar({ activeGridSize, onGridSizeChange }) {
   const [savedGames, setSavedGames] = useState({});
 
   useEffect(() => {

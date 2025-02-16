@@ -7,7 +7,7 @@ import Switch from "./components/ui/Switch";
 import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
 import Modal from "./components/ui/Modal";
-import Sidebar from "./components/Sidebar";
+import HistorySidebar from "./components/HistorySidebar";
 import ChampionsSidebar from "./components/ChampionsSidebar";
 
 // State management utilities
@@ -324,9 +324,25 @@ export default function Bingo() {
       if (marked.filter((_, idx) => idx % size === i).every(Boolean)) bingo = true;
     }
 
-    // Check diagonals for bingo
-    if (marked.filter((_, idx) => idx % (size + 1) === 0).every(Boolean)) bingo = true;
-    if (marked.filter((_, idx) => idx % (size - 1) === 0 && idx !== 0 && idx !== size * size - 1).every(Boolean)) bingo = true;
+    // Check main diagonal (top-left to bottom-right)
+    let mainDiagonal = true;
+    for (let i = 0; i < size; i++) {
+      if (!marked[i * size + i]) {
+        mainDiagonal = false;
+        break;
+      }
+    }
+    if (mainDiagonal) bingo = true;
+
+    // Check anti-diagonal (top-right to bottom-left)
+    let antiDiagonal = true;
+    for (let i = 0; i < size; i++) {
+      if (!marked[i * size + (size - 1 - i)]) {
+        antiDiagonal = false;
+        break;
+      }
+    }
+    if (antiDiagonal) bingo = true;
 
     return bingo;
   };
@@ -339,7 +355,8 @@ export default function Bingo() {
 
   return (
       <div className="min-h-screen bg-gray-50 flex">
-      <Sidebar 
+      <HistorySidebar
+
         activeGridSize={activeGridSize}
         onGridSizeChange={handleGridSizeChange}
       />
@@ -460,6 +477,7 @@ export default function Bingo() {
                 setGrid(shuffled);
                 setSelectedChamps(shuffled);
                 setCurrentPosition(gridSize * gridSize);
+                setMarked(Array(gridSize * gridSize).fill(false));
               }}
               className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg"
             >
@@ -475,6 +493,7 @@ export default function Bingo() {
                 setGrid(Array(gridSize * gridSize).fill(null));
                 setSelectedChamps([]);
                 setCurrentPosition(0);
+                setMarked(Array(gridSize * gridSize).fill(false));
                 localStorage.removeItem('bingoState');
               }}
               className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg"
