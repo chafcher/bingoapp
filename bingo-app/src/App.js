@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import Cookies from 'js-cookie';
+import Sidebar from "./components/Sidebar";
 import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
@@ -7,8 +8,10 @@ import Switch from "./components/ui/Switch";
 import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
 import Modal from "./components/ui/Modal";
+
 // State management utilities
 const STORAGE_KEY = 'bingoState';
+const getStorageKey = (size) => `bingoState_${size}`;
 
 const saveState = (state) => {
   try {
@@ -26,26 +29,6 @@ const saveState = (state) => {
   }
 };
 
-const loadState = () => {
-  try {
-    // Try localStorage first
-    let savedState = localStorage.getItem(STORAGE_KEY);
-    
-    // If not in localStorage, try cookies
-    if (!savedState) {
-      savedState = Cookies.get(STORAGE_KEY);
-    }
-    
-    if (!savedState) {
-      return null;
-    }
-    
-    return JSON.parse(savedState);
-  } catch (error) {
-    console.error('Error loading state:', error);
-    return null;
-  }
-};
 
 
 const PHASE = {
@@ -80,6 +63,7 @@ const gridSizes = [5, 6, 7, 8];
 export default function Bingo() {
   const [isLoading, setIsLoading] = useState(true);
   const [gridSize, setGridSize] = useState(5);
+  const [activeGridSize, setActiveGridSize] = useState(5);
   const [phase, setPhase] = useState(PHASE.SELECTION);
   const [showRemoveModal, setShowRemoveModal] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState(null);
@@ -96,7 +80,7 @@ export default function Bingo() {
   // Load saved state on initial render
   useEffect(() => {
     console.log('Attempting to load state from cookies');
-    const savedState = Cookies.get('bingoState', { path: '/' });
+    const savedState = Cookies.get('bingoState');
     console.log('Retrieved cookie:', savedState);
     if (savedState) {
       console.log('Found saved state:', savedState);
@@ -154,19 +138,65 @@ export default function Bingo() {
   }, [grid, marked, selectedChamps, gridSize, phase, currentPosition, isLoading]);
 
 
-  const handleSelectChamp = (champ) => {
-    if (currentPosition >= gridSize * gridSize) {
-      alert('Grid is full! Please randomize or clear the grid.');
-      return;
+  const handleGridSizeChange = (newSize) => {
+    setGridSize(newSize);
+    setActiveGridSize(newSize);
+    
+    // Save current state before switching
+    const state = {
+      grid,
+      marked,
+      selectedChamps,
+      gridSize: newSize,
+      phase,
+      currentPosition
+    };
+    localStorage.setItem(getStorageKey(newSize), JSON.stringify(state));
+    
+    // Load new state
+    const savedState = localStorage.getItem(getStorageKey(newSize));
+    if (savedState) {
+      const state = JSON.parse(savedState);
+      setGrid(state.grid);
+      setMarked(state.marked);
+      setSelectedChamps(state.selectedChamps);
+      setCurrentPosition(state.currentPosition);
+      setPhase(state.phase);
+    } else {
+      // Initialize new grid
+      setGrid(Array(newSize * newSize).fill(null));
+      setMarked(Array(newSize * newSize).fill(false));
+      setSelectedChamps([]);
+      setCurrentPosition(0);
+      setPhase(PHASE.SELECTION);
     }
+  };
 
-    setSelectedChamps((prev) => [...prev, champ]);
-    setGrid((prevGrid) => {
-      const newGrid = [...prevGrid];
-      newGrid[currentPosition] = champ;
-      return newGrid;
-    });
-    setCurrentPosition((prev) => prev + 1);
+  const handleSelectChamp = (champ) => {
+    // First check for empty spots
+    const emptyIndex = grid.findIndex(cell => cell === null);
+    
+    if (emptyIndex !== -1) {
+      // If there's an empty spot, fill it
+      setGrid(prevGrid => {
+        const newGrid = [...prevGrid];
+        newGrid[emptyIndex] = champ;
+        return newGrid;
+      });
+      setSelectedChamps(prev => [...prev, champ]);
+    } else if (currentPosition < gridSize * gridSize) {
+      // If no empty spots but grid isn't full, add to next position
+      setGrid(prevGrid => {
+        const newGrid = [...prevGrid];
+        newGrid[currentPosition] = champ;
+        return newGrid;
+      });
+      setSelectedChamps(prev => [...prev, champ]);
+      setCurrentPosition(prev => prev + 1);
+    } else {
+      // Grid is full
+      alert('Grid is full! Please randomize or clear the grid.');
+    }
   };
 
   const hasDuplicates = (arr) => new Set(arr).size !== arr.length;
@@ -246,6 +276,18 @@ export default function Bingo() {
         setCurrentPosition(gridSize * gridSize);
         return;
       }
+      
+      // If we're about to hit max attempts, use a fallback arrangement
+      if (attempts === maxAttempts - 1) {
+        // Just fill the grid with champions in order
+        for (let i = 0; i < gridSize * gridSize; i++) {
+          newGrid[i] = championsPool[i];
+        }
+        setGrid(newGrid);
+        setMarked(Array(gridSize * gridSize).fill(false));
+        setCurrentPosition(gridSize * gridSize);
+        return;
+      }
     }
     
     alert('Could not find a valid grid configuration. Please try again or select different champions.');
@@ -309,238 +351,237 @@ export default function Bingo() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
-      <h1 className="text-3xl font-bold text-gray-800 mb-6">Fearless Draft Bingo</h1>
-      <div className="flex items-center gap-3 mb-6">
-        <span className="text-sm font-medium">Selection Phase</span>
-        <Switch
-          checked={phase === PHASE.PLAYING}
-          onChange={(checked) => setPhase(checked ? PHASE.PLAYING : PHASE.SELECTION)}
-        />
-        <span className="text-sm font-medium">Playing Phase</span>
-      </div>
-      <div className="flex gap-3 mb-6">
-        {gridSizes.map((size) => (
-          <Button key={size} onClick={() => setGridSize(size)}>{size}x{size}</Button>
-        ))}
-      </div>
-      <div className="w-full max-w-md mb-6 relative">
-        <input
-          type="text"
-          placeholder="Search for a champion..."
-          className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-          value={search}
-          onChange={(e) => {
-            setSearch(e.target.value);
-            setHighlightedIndex(0);
-          }}
-          onKeyDown={(e) => {
-            const filtered = allChampions.filter(champ => 
-              champ.toLowerCase().includes(search.toLowerCase())
-            );
-            
-            if (e.key === 'Enter' && search && filtered.length > 0) {
-              handleSelectChamp(filtered[highlightedIndex]);
-              setSearch('');
-              setHighlightedIndex(0);
-            }
-            else if (e.key === 'ArrowDown' && filtered.length > 0) {
-              setHighlightedIndex((prev) => 
-                Math.min(prev + 1, filtered.length - 1)
-              );
-            }
-            else if (e.key === 'ArrowUp' && filtered.length > 0) {
-              setHighlightedIndex((prev) => Math.max(prev - 1, 0));
-            }
-          }}
-          ref={searchInputRef}
-        />
-        {search && (
-          <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto">
-            {allChampions
-              .filter(champ => champ.toLowerCase().includes(search.toLowerCase()))
-              .map((champ, index) => (
-                <div
-                  key={champ}
-                  className={`p-2 cursor-pointer flex items-center gap-2 ${
-                  index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
-                }`}
-                  onClick={() => {
-                    handleSelectChamp(champ);
-                    setToastMessage(`${champ} is added to the grid`);
-                    setSearch('');
-                    searchInputRef.current.focus();
-                  }}
-                >
-                  <img
-                    src={`/out/${champ}.png`}
-                    alt={champ}
-                    className="w-6 h-6 rounded-full"
-                    onError={(e) => e.target.src = '/fallback-champion-icon.png'}
-                  />
-                  <span className="text-sm">{champ}</span>
-                </div>
-              ))}
-          </div>
-        )}
-      </div>
-      <Button 
-        onClick={() => setShowModal(true)}
-        className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg mb-6"
-      >
-        Show Champions
-      </Button>
-      <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {allChampions.map((champ) => (
+    <div className="min-h-screen bg-gray-50 flex">
+      <Sidebar 
+        activeGridSize={activeGridSize}
+        onGridSizeChange={handleGridSizeChange}
+      />
+      <div className="flex-1 p-6 flex flex-col items-center">
+        <h1 className="text-3xl font-bold text-gray-800 mb-6">Fearless Draft Bingo</h1>
+        <div className="flex items-center gap-3 mb-6">
+          <span className="text-sm font-medium">Selection Phase</span>
+          <Switch
+            checked={phase === PHASE.PLAYING}
+            onChange={(checked) => setPhase(checked ? PHASE.PLAYING : PHASE.SELECTION)}
+          />
+          <span className="text-sm font-medium">Playing Phase</span>
+        </div>
+        <div className="flex gap-3 mb-6">
+          {gridSizes.map((size) => (
             <Button 
-              key={champ} 
-              onClick={() => {
-                handleSelectChamp(champ);
-                setToastMessage(`${champ} is added to the grid`);
-              }}
-              className="flex items-center justify-center gap-2 w-full"
-            >
-                  <img 
-                    src={`/out/${champ}.png`}
-                    alt={champ}
-                    className="w-8 h-8 rounded-full"
-                    onError={(e) => e.target.src = '/fallback-champion-icon.png'}
-                  />
-
-              <span className="text-sm">{champ}</span>
+              key={size} 
+              onClick={() => handleGridSizeChange(size)}
+              className={size === activeGridSize ? 'bg-blue-500' : ''}>
+              {size}x{size}
             </Button>
           ))}
         </div>
-      </Modal>
-      <div className="flex gap-3 mb-6">
-        <Tooltip 
-          content="Grid must be full to randomize."
-          show={selectedChamps.length < gridSize * gridSize}
-        >
-          <Button 
-            onClick={randomizeGrid} 
-            className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg"
-            disabled={selectedChamps.length < gridSize * gridSize}
-          >
-            Randomize Grid
-          </Button>
-        </Tooltip>
-        <Tooltip 
-          content="Instantly fill grid with random champions"
-        >
-          <Button 
-            onClick={() => {
-              // Create a set of unique champions
-              const uniqueChamps = [...new Set(allChampions)];
+        <div className="w-full max-w-md mb-6 relative">
+          <input
+            type="text"
+            placeholder="Search for a champion..."
+            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
+            value={search}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setHighlightedIndex(0);
+            }}
+            onKeyDown={(e) => {
+              const filtered = allChampions.filter(champ => 
+                champ.toLowerCase().includes(search.toLowerCase())
+              );
               
-              // Shuffle and select the required number of unique champions
-              const shuffled = uniqueChamps
-                .sort(() => Math.random() - 0.5)
-                .slice(0, gridSize * gridSize);
-                
-              setGrid(shuffled);
-              setSelectedChamps(shuffled);
-              setCurrentPosition(gridSize * gridSize);
+              if (e.key === 'Enter' && search && filtered.length > 0) {
+                handleSelectChamp(filtered[highlightedIndex]);
+                setSearch('');
+                setHighlightedIndex(0);
+              }
+              else if (e.key === 'ArrowDown' && filtered.length > 0) {
+                setHighlightedIndex((prev) => 
+                  Math.min(prev + 1, filtered.length - 1)
+                );
+              }
+              else if (e.key === 'ArrowUp' && filtered.length > 0) {
+                setHighlightedIndex((prev) => Math.max(prev - 1, 0));
+              }
             }}
-            className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg"
-          >
-            Random Grid
-          </Button>
-        </Tooltip>
-        <Tooltip 
-          content="Grid must have at least one champion selected to clear."
-          show={selectedChamps.length === 0}
-        >
-          <Button 
-            onClick={() => {
-              setGrid(Array(gridSize * gridSize).fill(null));
-              setSelectedChamps([]);
-              setCurrentPosition(0);
-              localStorage.removeItem('bingoState');
-            }}
-            className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg"
-            disabled={selectedChamps.length === 0}
-          >
-            Clear Grid
-          </Button>
-        </Tooltip>
-      </div>
-      <div
-        className={`grid gap-3 w-full max-w-4xl`}
-        style={{
-          gridTemplateColumns: `repeat(${gridSize}, 1fr)`
-        }}
-      >
-        {grid.map((champ, index) => (
-          <Card
-            key={index}
-            onClick={() => handleMark(index)}
-            className={`p-3 rounded-lg shadow-sm transition-all ${
-              marked[index] ? "bg-green-500" : "bg-white hover:bg-gray-100"
-            }`}
-          >
-            <div className="flex items-center justify-center h-20 cursor-pointer relative">
-              {champ ? (
-                <>
-                  <img
-                    src={`/out/${champ}.png`}
-                    alt={champ}
-                    className="w-12 h-12 rounded-full"
-                    onError={(e) => e.target.src = '/fallback-champion-icon.png'}
-                  />
-                  {marked[index] && (
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <span className="text-red-600 text-4xl font-bold">X</span>
-                    </div>
-                  )}
-                </>
-              ) : "?"}
-            </div>
-          </Card>
-        ))}
-      </div>
-      <Modal
-        isOpen={showRemoveModal}
-        onClose={() => setShowRemoveModal(false)}
-        title="Remove Champion"
-        actions={[
-          {
-            label: 'Cancel',
-            onClick: () => setShowRemoveModal(false),
-            variant: 'secondary'
-          },
-          {
-            label: 'Remove',
-            onClick: () => {
-              handleRemoveChampion();
-              setShowRemoveModal(false);
-            },
-            variant: 'danger'
-          }
-
-        ]}
-      >
-        <p>Are you sure you want to remove this champion?</p>
-      </Modal>
-
-      <div className="fixed inset-0 pointer-events-none">
-        {toastMessage && (
-          <Toast 
-            message={toastMessage} 
-            onClose={() => setToastMessage(null)}
+            ref={searchInputRef}
           />
+          {search && (
+            <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto">
+              {allChampions
+                .filter(champ => champ.toLowerCase().includes(search.toLowerCase()))
+                .map((champ, index) => (
+                  <div
+                    key={champ}
+                    className={`p-2 cursor-pointer flex items-center gap-2 ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
+                    onClick={() => {
+                      handleSelectChamp(champ);
+                      setToastMessage(`${champ} is added to the grid`);
+                      setSearch('');
+                      searchInputRef.current.focus();
+                    }}
+                  >
+                    <img
+                      src={`/out/${champ}.png`}
+                      alt={champ}
+                      className="w-6 h-6 rounded-full"
+                      onError={(e) => e.target.src = '/fallback-champion-icon.png'}
+                    />
+                    <span className="text-sm">{champ}</span>
+                  </div>
+                ))}
+            </div>
+          )}
+        </div>
+        <Button 
+          onClick={() => setShowModal(true)}
+          className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg mb-6"
+        >
+          Show Champions
+        </Button>
+        <Modal isOpen={showModal} onClose={() => setShowModal(false)}>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {allChampions.map((champ) => (
+              <Button 
+                key={champ} 
+                onClick={() => {
+                  handleSelectChamp(champ);
+                  setToastMessage(`${champ} is added to the grid`);
+                }}
+                className="flex items-center justify-center gap-2 w-full"
+              >
+                <img 
+                  src={`/out/${champ}.png`}
+                  alt={champ}
+                  className="w-8 h-8 rounded-full"
+                  onError={(e) => e.target.src = '/fallback-champion-icon.png'}
+                />
+                <span className="text-sm">{champ}</span>
+              </Button>
+            ))}
+          </div>
+        </Modal>
+        <div className="flex gap-3 mb-6">
+          <Tooltip 
+            content="Grid must be full to randomize."
+            show={selectedChamps.length < gridSize * gridSize}
+          >
+            <Button 
+              onClick={randomizeGrid} 
+              className="bg-primary hover:bg-secondary text-white font-semibold py-3 px-6 rounded-lg"
+              disabled={selectedChamps.length < gridSize * gridSize}
+            >
+              Randomize Grid
+            </Button>
+          </Tooltip>
+          <Tooltip 
+            content="Instantly fill grid with random champions"
+          >
+            <Button 
+              onClick={() => {
+                // Create a set of unique champions
+                const uniqueChamps = [...new Set(allChampions)];
+                
+                // Shuffle and select the required number of unique champions
+                const shuffled = uniqueChamps
+                  .sort(() => Math.random() - 0.5)
+                  .slice(0, gridSize * gridSize);
+                  
+                setGrid(shuffled);
+                setSelectedChamps(shuffled);
+                setCurrentPosition(gridSize * gridSize);
+              }}
+              className="bg-purple-500 hover:bg-purple-600 text-white font-semibold py-3 px-6 rounded-lg"
+            >
+              Random Grid
+            </Button>
+          </Tooltip>
+          <Tooltip 
+            content="Grid must have at least one champion selected to clear."
+            show={selectedChamps.length === 0}
+          >
+            <Button 
+              onClick={() => {
+                setGrid(Array(gridSize * gridSize).fill(null));
+                setSelectedChamps([]);
+                setCurrentPosition(0);
+                localStorage.removeItem('bingoState');
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-3 px-6 rounded-lg"
+              disabled={selectedChamps.length === 0}
+            >
+              Clear Grid
+            </Button>
+          </Tooltip>
+        </div>
+        <div className={`grid gap-1 w-full max-w-2xl`} style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
+          {grid.map((champ, index) => (
+            <Card
+              key={index}
+              onClick={() => handleMark(index)}
+              className={`p-4 rounded-lg shadow-sm transition-all ${marked[index] ? "bg-green-600" : "bg-white hover:bg-gray-200"}`}
+            >
+              <div className="flex items-center justify-center h-10 cursor-pointer relative">
+                {champ ? (
+                  <>
+                    <img
+                      src={`/out/${champ}.png`}
+                      alt={champ}
+                      className="w-12 h-12 rounded-full"
+                      onError={(e) => e.target.src = '/fallback-champion-icon.png'}
+                    />
+                    {marked[index] && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-red-900 text-xl font-bold">X</span>
+                      </div>
+                    )}
+                  </>
+                ) : "?"}
+              </div>
+            </Card>
+          ))}
+        </div>
+        <Modal
+          isOpen={showRemoveModal}
+          onClose={() => setShowRemoveModal(false)}
+          title="Remove Champion"
+          actions={[
+            {
+              label: 'Cancel',
+              onClick: () => setShowRemoveModal(false),
+              variant: 'secondary',
+            },
+            {
+              label: 'Remove',
+              onClick: () => {
+                handleRemoveChampion();
+                setShowRemoveModal(false);
+              },
+              variant: 'danger',
+            },
+          ]}
+        >
+          <p>Are you sure you want to remove this champion?</p>
+        </Modal>
+        <div className="fixed inset-0 pointer-events-none">
+          {toastMessage && (
+            <Toast 
+              message={toastMessage} 
+              onClose={() => setToastMessage(null)}
+            />
+          )}
+        </div>
+        {checkBingo() && (
+          <motion.div 
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="text-2xl font-bold text-green-600 bg-green-100 px-6 py-3 rounded-full"
+          >
+            BINGO!
+          </motion.div>
         )}
       </div>
-      {checkBingo() && (
-        <motion.div 
-          initial={{ scale: 0 }}
-          animate={{ scale: 1 }}
-          className="text-2xl font-bold text-green-600 bg-green-100 px-6 py-3 rounded-full"
-        >
-          BINGO!
-        </motion.div>
-      )}
-    </div>
+    </div> 
   );
 }
