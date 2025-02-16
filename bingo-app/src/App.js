@@ -1,41 +1,53 @@
 import { useState, useEffect, useRef } from "react";
+import Toast from "./components/ui/Toast";
+import { motion } from "framer-motion";
+import Switch from "./components/ui/Switch";
 import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
 import Modal from "./components/ui/Modal";
-import { motion } from "framer-motion";
+
+const PHASE = {
+  SELECTION: 'selection',
+  PLAYING: 'playing'
+};
 
 
 const allChampions = [
-  "Ahri", "Akali", "Akshan", "Alistar", "Amumu", "Anivia", "Annie", "Aphelios",
-  "Ashe", "AurelionSol", "Azir", "Bard", "Blitzcrank", "Brand", "Braum", "Caitlyn",
+  "Aatrox", "Ahri", "Akali", "Akshan", "Alistar", "Ambessa", "Amumu", "Anivia", "Annie", "Aphelios",
+  "Ashe", "AurelionSol","Aurora", "Azir", "Bard", "BelVeth", "Blitzcrank", "Brand", "Braum", "Briar", "Caitlyn",
   "Camille", "Cassiopeia", "ChoGath", "Corki", "Darius", "Diana", "Draven", "DrMundo",
   "Ekko", "Elise", "Evelynn", "Ezreal", "Fiddlesticks", "Fiora", "Fizz", "Galio",
-  "Gangplank", "Garen", "Gnar", "Gragas", "Graves", "Hecarim", "Heimerdinger", "Illaoi",
+  "Gangplank", "Garen", "Gnar", "Gragas", "Graves", "Gwen", "Hecarim", "Heimerdinger", "Hwei", "Illaoi",
   "Irelia", "Ivern", "Janna", "JarvanIV", "Jax", "Jayce", "Jhin", "Jinx", "KaiSa",
   "Kalista", "Karma", "Karthus", "Kassadin", "Katarina", "Kayle", "Kayn", "Kennen",
-  "KhaZix", "Kindred", "Kled", "KogMaw", "LeBlanc", "LeeSin", "Leona", "Lillia",
-  "Lissandra", "Lucian", "Lulu", "Lux", "Malphite", "Malzahar", "Maokai", "MasterYi",
-  "MissFortune", "Mordekaiser", "Morgana", "Nami", "Nasus", "Nautilus", "Neeko", "Nidalee",
-  "Nocturne", "Nunu", "Olaf", "Orianna", "Ornn", "Pantheon", "Poppy", "Pyke", "Qiyana",
-  "Quinn", "Rakan", "Rammus", "RekSai", "Rell", "Renekton", "Rengar", "Riven", "Rumble",
+  "KhaZix", "Kindred", "Kled", "KogMaw", "KSante", "LeBlanc", "LeeSin", "Leona", "Lillia",
+  "Lissandra", "Lucian", "Lulu", "Lux", "Malphite", "Malzahar", "Maokai", "Milio", "MasterYi", "Mel",
+  "MissFortune", "Mordekaiser", "Morgana", "Naafiri", "Nami", "Nasus", "Nautilus", "Neeko", "Nidalee",
+  "Nilah", "Nocturne", "Nunu", "Olaf", "Orianna", "Ornn", "Pantheon", "Poppy", "Pyke", "Qiyana",
+  "Quinn", "Rakan", "Rammus", "RekSai", "Rell", "Renata", "Renekton", "Rengar", "Riven", "Rumble",
   "Ryze", "Samira", "Sejuani", "Senna", "Seraphine", "Sett", "Shaco", "Shen", "Shyvana",
-  "Singed", "Sion", "Sivir", "Skarner", "Sona", "Soraka", "Swain", "Sylas", "Syndra",
+  "Singed", "Sion", "Sivir", "Skarner","Smolder", "Sona", "Soraka", "Swain", "Sylas", "Syndra",
   "TahmKench", "Taliyah", "Talon", "Taric", "Teemo", "Thresh", "Tristana", "Trundle",
   "Tryndamere", "TwistedFate", "Twitch", "Udyr", "Urgot", "Varus", "Vayne", "Veigar",
-  "VelKoz", "Vi", "Viego", "Viktor", "Vladimir", "Volibear", "Warwick", "Wukong",
+  "VelKoz", "Vex", "Vi", "Viego", "Viktor", "Vladimir", "Volibear", "Warwick", "Wukong",
   "Xayah", "Xerath", "XinZhao", "Yasuo", "Yone", "Yorick", "Yuumi", "Zac", "Zed",
-  "Ziggs", "Zilean", "Zoe", "Zyra"
+  "Zeri", "Ziggs", "Zilean", "Zoe", "Zyra"
 ];
 
 const gridSizes = [5, 6, 7, 8];
 
 export default function Bingo() {
   const [gridSize, setGridSize] = useState(5);
+  const [phase, setPhase] = useState(PHASE.SELECTION);
+  const [showRemoveModal, setShowRemoveModal] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(null);
   const [selectedChamps, setSelectedChamps] = useState([]);
   const [grid, setGrid] = useState(Array(5 * 5).fill(null));
   const [marked, setMarked] = useState(Array(5 * 5).fill(false));
   const [search, setSearch] = useState("");
+  const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [showModal, setShowModal] = useState(false);
+  const [toastMessage, setToastMessage] = useState(null);
   const [currentPosition, setCurrentPosition] = useState(0);
   const searchInputRef = useRef(null);
 
@@ -143,11 +155,34 @@ export default function Bingo() {
 
 
   const handleMark = (index) => {
-    setMarked((prev) => {
-      const newMarked = [...prev];
-      newMarked[index] = !newMarked[index];
-      return newMarked;
-    });
+    if (phase === PHASE.SELECTION) {
+      if (!grid[index]) {
+        alert('Please select a champion first.');
+        return;
+      }
+      setSelectedIndex(index);
+      setShowRemoveModal(true);
+    } else {
+      setMarked((prev) => {
+        const newMarked = [...prev];
+        newMarked[index] = !newMarked[index];
+        return newMarked;
+      });
+    }
+  };
+
+  const handleRemoveChampion = () => {
+    if (selectedIndex !== null) {
+      const champion = grid[selectedIndex];
+      setGrid((prev) => {
+        const newGrid = [...prev];
+        newGrid[selectedIndex] = null;
+        return newGrid;
+      });
+      setSelectedChamps((prev) => prev.filter(c => c !== champion));
+      setCurrentPosition((prev) => prev - 1);
+    }
+    setShowRemoveModal(false);
   };
 
   const checkBingo = () => {
@@ -170,6 +205,14 @@ export default function Bingo() {
   return (
     <div className="min-h-screen bg-gray-50 p-6 flex flex-col items-center">
       <h1 className="text-3xl font-bold text-gray-800 mb-6">Fearless Draft Bingo</h1>
+      <div className="flex items-center gap-3 mb-6">
+        <span className="text-sm font-medium">Selection Phase</span>
+        <Switch
+          checked={phase === PHASE.PLAYING}
+          onChange={(checked) => setPhase(checked ? PHASE.PLAYING : PHASE.SELECTION)}
+        />
+        <span className="text-sm font-medium">Playing Phase</span>
+      </div>
       <div className="flex gap-3 mb-6">
         {gridSizes.map((size) => (
           <Button key={size} onClick={() => setGridSize(size)}>{size}x{size}</Button>
@@ -181,16 +224,27 @@ export default function Bingo() {
           placeholder="Search for a champion..."
           className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setHighlightedIndex(0);
+          }}
           onKeyDown={(e) => {
-            if (e.key === 'Enter' && search) {
-              const filtered = allChampions.filter(champ => 
-                champ.toLowerCase().includes(search.toLowerCase())
+            const filtered = allChampions.filter(champ => 
+              champ.toLowerCase().includes(search.toLowerCase())
+            );
+            
+            if (e.key === 'Enter' && search && filtered.length > 0) {
+              handleSelectChamp(filtered[highlightedIndex]);
+              setSearch('');
+              setHighlightedIndex(0);
+            }
+            else if (e.key === 'ArrowDown' && filtered.length > 0) {
+              setHighlightedIndex((prev) => 
+                Math.min(prev + 1, filtered.length - 1)
               );
-              if (filtered.length > 0) {
-                handleSelectChamp(filtered[0]);
-                setSearch('');
-              }
+            }
+            else if (e.key === 'ArrowUp' && filtered.length > 0) {
+              setHighlightedIndex((prev) => Math.max(prev - 1, 0));
             }
           }}
           ref={searchInputRef}
@@ -199,10 +253,12 @@ export default function Bingo() {
           <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto">
             {allChampions
               .filter(champ => champ.toLowerCase().includes(search.toLowerCase()))
-              .map((champ) => (
+              .map((champ, index) => (
                 <div
                   key={champ}
-                  className="p-2 hover:bg-gray-100 cursor-pointer flex items-center gap-2"
+                  className={`p-2 cursor-pointer flex items-center gap-2 ${
+                  index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-gray-100'
+                }`}
                   onClick={() => {
                     handleSelectChamp(champ);
                     setSearch('');
@@ -234,7 +290,7 @@ export default function Bingo() {
               key={champ} 
               onClick={() => {
                 handleSelectChamp(champ);
-                setShowModal(false);
+                setToastMessage(`${champ} is added to the grid`);
               }}
               className="flex items-center justify-center gap-2 w-full"
             >
@@ -290,6 +346,35 @@ export default function Bingo() {
           </Card>
         ))}
       </div>
+      <Modal
+        isOpen={showRemoveModal}
+        onClose={() => setShowRemoveModal(false)}
+        title="Remove Champion"
+        actions={[
+          {
+            label: 'Cancel',
+            onClick: () => setShowRemoveModal(false),
+            variant: 'secondary'
+          },
+          {
+            label: 'Remove',
+            onClick: () => {
+              handleRemoveChampion();
+              setShowRemoveModal(false);
+            },
+            variant: 'danger'
+          }
+        ]}
+      >
+        <p>Are you sure you want to remove this champion?</p>
+      </Modal>
+
+      {toastMessage && (
+        <Toast 
+          message={toastMessage} 
+          onClose={() => setToastMessage(null)}
+        />
+      )}
       {checkBingo() && (
         <motion.div 
           initial={{ scale: 0 }}
