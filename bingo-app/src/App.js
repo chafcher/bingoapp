@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef } from "react";
-import Cookies from 'js-cookie';
+import { useState, useEffect } from "react";
+//import Cookies from 'js-cookie';
 import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
@@ -17,17 +17,26 @@ const getStorageKey = (size) => `bingoState_${size}`;
 const saveState = (state) => {
   try {
     const serializedState = JSON.stringify(state);
-    // Save to both localStorage and cookies for redundancy
     localStorage.setItem(STORAGE_KEY, serializedState);
-    Cookies.set(STORAGE_KEY, serializedState, { 
-      expires: 7,
-      path: '/',
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict'
-    });
   } catch (error) {
-    console.error('Error saving state:', error);
+    console.error('Error saving state to localStorage:', error);
+    // Clear storage if quota is exceeded
+    if (error.name === 'QuotaExceededError') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
   }
+};
+
+const loadState = () => {
+  try {
+    const savedState = localStorage.getItem(STORAGE_KEY);
+    if (savedState) {
+      return JSON.parse(savedState);
+    }
+  } catch (error) {
+    console.error('Error loading state from localStorage:', error);
+  }
+  return null;
 };
 
 
@@ -63,6 +72,7 @@ const gridSizes = [5, 6, 7, 8];
 
 export default function Bingo() {
   const [isLoading, setIsLoading] = useState(true);
+  const [showHistorySidebar, setShowHistorySidebar] = useState(false);
   const [gridSize, setGridSize] = useState(5);
   const [activeGridSize, setActiveGridSize] = useState(5);
   const [phase, setPhase] = useState(PHASE.SELECTION);
@@ -71,36 +81,25 @@ export default function Bingo() {
   const [selectedChamps, setSelectedChamps] = useState([]);
   const [grid, setGrid] = useState(Array(gridSize * gridSize).fill(null));
   const [marked, setMarked] = useState(Array(gridSize * gridSize).fill(false));
-  const [search, setSearch] = useState("");
-  const [highlightedIndex, setHighlightedIndex] = useState(0);
+ // const [search, setSearch] = useState("");
+ // const [highlightedIndex, setHighlightedIndex] = useState(0);
   const [showChampionsSidebar, setShowChampionsSidebar] = useState(false);
   const [toastMessage, setToastMessage] = useState(null);
   const [currentPosition, setCurrentPosition] = useState(0);
-  const searchInputRef = useRef(null);
+ // const searchInputRef = useRef(null);
 
   // Load saved state on initial render
   useEffect(() => {
-    console.log('Attempting to load state from cookies');
-    const savedState = Cookies.get('bingoState');
+    const savedState = loadState();
     if (savedState) {
-      try {
-        const state = JSON.parse(savedState);
-        const size = state.gridSize || 5;
-        
-        // Initialize all state at once
-        setGridSize(size);
-        setGrid(state.grid || Array(size * size).fill(null));
-        setMarked(state.marked || Array(size * size).fill(false));
-        setSelectedChamps(state.selectedChamps || []);
-        setCurrentPosition(state.currentPosition || 0);
-        setPhase(state.phase || PHASE.SELECTION);
-        
-        console.log('State successfully loaded');
-      } catch (error) {
-        console.error('Error loading state:', error);
-      }
+      const size = savedState.gridSize || 5;
+      setGridSize(size);
+      setGrid(savedState.grid || Array(size * size).fill(null));
+      setMarked(savedState.marked || Array(size * size).fill(false));
+      setSelectedChamps(savedState.selectedChamps || []);
+      setCurrentPosition(savedState.currentPosition || 0);
+      setPhase(savedState.phase || PHASE.SELECTION);
     } else {
-      console.log('No saved state found');
       // Initialize default state
       setGrid(Array(5 * 5).fill(null));
       setMarked(Array(5 * 5).fill(false));
@@ -109,9 +108,9 @@ export default function Bingo() {
   }, []);
 
 
-  // Save state whenever it changes
+  // Save state only when important changes occur
   useEffect(() => {
-    if (!isLoading) {  // Only save after initial load
+    if (!isLoading) {
       const state = {
         grid,
         marked,
@@ -120,25 +119,24 @@ export default function Bingo() {
         phase,
         currentPosition
       };
-      saveState(state);
+      // Debounce saving to prevent excessive writes
+      const timeoutId = setTimeout(() => saveState(state), 500);
+      return () => clearTimeout(timeoutId);
     }
   }, [grid, marked, selectedChamps, gridSize, phase, currentPosition, isLoading]);
 
 
   const handleGridSizeChange = (newSize) => {
-    setGridSize(newSize);
-    setActiveGridSize(newSize);
-    
     // Save current state before switching
-    const state = {
+    const currentState = {
       grid,
       marked,
       selectedChamps,
-      gridSize: newSize,
+      gridSize,
       phase,
       currentPosition
     };
-    localStorage.setItem(getStorageKey(newSize), JSON.stringify(state));
+    localStorage.setItem(getStorageKey(gridSize), JSON.stringify(currentState));
     
     // Load new state
     const savedState = localStorage.getItem(getStorageKey(newSize));
@@ -146,9 +144,9 @@ export default function Bingo() {
       const state = JSON.parse(savedState);
       setGrid(state.grid);
       setMarked(state.marked);
-      setSelectedChamps(state.selectedChamps);
-      setCurrentPosition(state.currentPosition);
-      setPhase(state.phase);
+      setSelectedChamps(state.selectedChamps || []);
+      setCurrentPosition(state.currentPosition || 0);
+      setPhase(state.phase || PHASE.SELECTION);
     } else {
       // Initialize new grid
       setGrid(Array(newSize * newSize).fill(null));
@@ -157,6 +155,9 @@ export default function Bingo() {
       setCurrentPosition(0);
       setPhase(PHASE.SELECTION);
     }
+    
+    setGridSize(newSize);
+    setActiveGridSize(newSize);
   };
 
   const handleSelectChamp = (champ) => {
@@ -355,15 +356,31 @@ export default function Bingo() {
 
   return (
       <div className="min-h-screen bg-gray-50 flex">
+      <button
+        onClick={() => setShowHistorySidebar(!showHistorySidebar)}
+        className={`fixed top-4 left-4 p-2 bg-primary hover:bg-secondary text-white rounded-lg shadow-md z-50 transition-all duration-300`}
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+      
       <HistorySidebar
-
+        isOpen={showHistorySidebar}
+        onClose={() => setShowHistorySidebar(false)}
         activeGridSize={activeGridSize}
         onGridSizeChange={handleGridSizeChange}
       />
-      <div className="flex-1 p-6 flex flex-col items-center relative">
+      
+      <div className={`flex-1 p-6 transition-all duration-300 ${
+        showHistorySidebar ? 'blur-sm' : ''
+      }`}>
+        <div className="flex flex-col items-center relative">
         <button
           onClick={() => setShowChampionsSidebar(!showChampionsSidebar)}
-          className="fixed top-4 right-4 p-2 bg-primary hover:bg-secondary text-white rounded-lg shadow-md z-50"
+          className={`fixed top-4 p-2 bg-primary hover:bg-secondary text-white rounded-lg shadow-md z-50 transition-all duration-300 ${
+            showChampionsSidebar ? 'right-[17rem]' : 'right-4'
+          }`}
         >
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
@@ -389,65 +406,6 @@ export default function Bingo() {
             </Button>
           ))}
         </div>
-        <div className="w-full max-w-md mb-6 relative">
-          <input
-            type="text"
-            placeholder="Search for a champion..."
-            className="border border-gray-300 rounded-lg p-3 w-full focus:ring-2 focus:ring-primary focus:border-transparent transition-all"
-            value={search}
-            onChange={(e) => {
-              setSearch(e.target.value);
-              setHighlightedIndex(0);
-            }}
-            onKeyDown={(e) => {
-              const filtered = allChampions.filter(champ => 
-                champ.toLowerCase().includes(search.toLowerCase())
-              );
-              
-              if (e.key === 'Enter' && search && filtered.length > 0) {
-                handleSelectChamp(filtered[highlightedIndex]);
-                setSearch('');
-                setHighlightedIndex(0);
-              }
-              else if (e.key === 'ArrowDown' && filtered.length > 0) {
-                setHighlightedIndex((prev) => 
-                  Math.min(prev + 1, filtered.length - 1)
-                );
-              }
-              else if (e.key === 'ArrowUp' && filtered.length > 0) {
-                setHighlightedIndex((prev) => Math.max(prev - 1, 0));
-              }
-            }}
-            ref={searchInputRef}
-          />
-          {search && (
-            <div className="absolute z-10 mt-1 w-full bg-white rounded-lg shadow-lg max-h-60 overflow-auto">
-              {allChampions
-                .filter(champ => champ.toLowerCase().includes(search.toLowerCase()))
-                .map((champ, index) => (
-                  <div
-                    key={champ}
-                    className={`p-2 cursor-pointer flex items-center gap-2 ${index === highlightedIndex ? 'bg-blue-100' : 'hover:bg-gray-100'}`}
-                    onClick={() => {
-                      handleSelectChamp(champ);
-                      setToastMessage(`${champ} is added to the grid`);
-                      setSearch('');
-                      searchInputRef.current.focus();
-                    }}
-                  >
-                    <img
-                      src={`/out/${champ}.png`}
-                      alt={champ}
-                      className="w-6 h-6 rounded-full"
-                      onError={(e) => e.target.src = '/fallback-champion-icon.png'}
-                    />
-                    <span className="text-sm">{champ}</span>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-
         <div className="flex gap-3 mb-6">
           <Tooltip 
             content="Grid must be full to randomize."
@@ -569,6 +527,7 @@ export default function Bingo() {
             BINGO!
           </motion.div>
         )}
+        </div>
       </div>
       <ChampionsSidebar
         isOpen={showChampionsSidebar}
