@@ -45,11 +45,6 @@ export default function Bingo() {
   }, [gridSize]);
 
   const handleSelectChamp = (champ) => {
-    if (selectedChamps.includes(champ)) {
-      setSelectedChamps((prev) => prev.filter(c => c !== champ));
-      return;
-    }
-
     if (currentPosition >= gridSize * gridSize) {
       alert('Grid is full! Please randomize or clear the grid.');
       return;
@@ -64,15 +59,86 @@ export default function Bingo() {
     setCurrentPosition((prev) => prev + 1);
   };
 
+  const hasDuplicates = (arr) => new Set(arr).size !== arr.length;
+
+  const isValidPlacement = (grid, index, champ) => {
+    const size = gridSize;
+    const row = Math.floor(index / size);
+    const col = index % size;
+
+    // Check row
+    for (let i = 0; i < size; i++) {
+      if (grid[row * size + i] === champ) return false;
+    }
+
+    // Check column
+    for (let i = 0; i < size; i++) {
+      if (grid[i * size + col] === champ) return false;
+    }
+
+    // Check diagonals
+    if (row === col) {
+      for (let i = 0; i < size; i++) {
+        if (grid[i * size + i] === champ) return false;
+      }
+    }
+
+    if (row + col === size - 1) {
+      for (let i = 0; i < size; i++) {
+        if (grid[i * size + (size - 1 - i)] === champ) return false;
+      }
+    }
+
+    return true;
+  };
+
   const randomizeGrid = () => {
     if (selectedChamps.length < gridSize * gridSize) {
       alert(`Please select at least ${gridSize * gridSize} champions`);
       return;
     }
-    const shuffled = [...selectedChamps].sort(() => Math.random() - 0.5);
-    setGrid(shuffled.slice(0, gridSize * gridSize));
-    setMarked(Array(gridSize * gridSize).fill(false));
-    setCurrentPosition(gridSize * gridSize);
+
+    // If no duplicates, use simple shuffle
+    if (!hasDuplicates(selectedChamps)) {
+      const shuffled = [...selectedChamps].sort(() => Math.random() - 0.5);
+      setGrid(shuffled.slice(0, gridSize * gridSize));
+      setMarked(Array(gridSize * gridSize).fill(false));
+      setCurrentPosition(gridSize * gridSize);
+      return;
+    }
+
+    // For duplicates, use constrained placement
+    const newGrid = Array(gridSize * gridSize).fill(null);
+    const championsPool = [];
+    while (championsPool.length < gridSize * gridSize) {
+      championsPool.push(...selectedChamps);
+    }
+    
+    let attempts = 0;
+    const maxAttempts = 1000;
+    
+    while (attempts < maxAttempts) {
+      attempts++;
+      const shuffled = championsPool.sort(() => Math.random() - 0.5);
+      let valid = true;
+      
+      for (let i = 0; i < gridSize * gridSize; i++) {
+        if (!isValidPlacement(newGrid, i, shuffled[i])) {
+          valid = false;
+          break;
+        }
+        newGrid[i] = shuffled[i];
+      }
+      
+      if (valid) {
+        setGrid(newGrid);
+        setMarked(Array(gridSize * gridSize).fill(false));
+        setCurrentPosition(gridSize * gridSize);
+        return;
+      }
+    }
+    
+    alert('Could not find a valid grid configuration. Please try again or select different champions.');
   };
 
 
