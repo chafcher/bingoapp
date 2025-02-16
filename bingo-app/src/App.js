@@ -30,7 +30,7 @@ const allChampions = [
 const gridSizes = [5, 6, 7, 8];
 
 export default function Bingo() {
-  const [gridSize, setGridSize] = useState(4);
+  const [gridSize, setGridSize] = useState(5);
   const [selectedChamps, setSelectedChamps] = useState([]);
   const [grid, setGrid] = useState(Array(4 * 4).fill(null));
   const [marked, setMarked] = useState(Array(4 * 4).fill(false));
