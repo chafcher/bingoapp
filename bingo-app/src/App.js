@@ -4,8 +4,8 @@ import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
 import Switch from "./components/ui/Switch";
-import Card from "./components/ui/Card";
 import Button from "./components/ui/Button";
+
 import Modal from "./components/ui/Modal";
 import HistorySidebar from "./components/HistorySidebar";
 import ChampionsSidebar from "./components/ChampionsSidebar";
@@ -472,33 +472,38 @@ export default function Bingo() {
             </Button>
           </Tooltip>
         </div>
-        <div className={`grid gap-1 w-full max-w-2xl`} style={{ gridTemplateColumns: `repeat(${gridSize}, 1fr)` }}>
-          {grid.map((champ, index) => (
-            <Card
-              key={index}
-              onClick={() => handleMark(index)}
-              className={`p-4 rounded-lg shadow-sm transition-all ${marked[index] ? "bg-green-600" : "bg-white hover:bg-gray-200"}`}
-            >
-              <div className="flex items-center justify-center h-10 cursor-pointer relative">
-                {champ ? (
+        <div className="grid gap-2" style={{ 
+            gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
+            width: `${gridSize * 100}px`
+          }}>
+            {grid.map((champion, index) => (
+              <div
+                key={index}
+                className={`relative aspect-square border rounded-lg flex items-center justify-center ${
+                  marked[index] ? 'bg-green-100' : 'bg-white'
+                }`}
+                onClick={() => handleMark(index)}
+              >
+                {champion && (
                   <>
-                    <img
-                      src={`/out/${champ}.png`}
-                      alt={champ}
-                      className="w-12 h-12 rounded-full"
-                      onError={(e) => e.target.src = '/fallback-champion-icon.png'}
+                    <img 
+                      src={`/out/${champion}.png`} 
+                      alt={champion} 
+                      className="w-full h-full object-cover rounded-lg"
                     />
                     {marked[index] && (
-                      <div className="absolute inset-0 flex items-center justify-center">
-                        <span className="text-red-900 text-xl font-bold">X</span>
+                      <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center">
+                        <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
                       </div>
                     )}
                   </>
-                ) : "?"}
+                )}
               </div>
-            </Card>
-          ))}
-        </div>
+            ))}
+          </div>
+
         <Modal
           isOpen={showRemoveModal}
           onClose={() => setShowRemoveModal(false)}
@@ -529,15 +534,16 @@ export default function Bingo() {
             />
           )}
         </div>
-        {checkBingo() && (
-          <motion.div 
-            initial={{ scale: 0 }}
-            animate={{ scale: 1 }}
-            className="text-2xl font-bold text-green-600 bg-green-100 px-6 py-3 rounded-full"
-          >
-            BINGO!
-          </motion.div>
-        )}
+          {checkBingo() && (
+            <motion.div 
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              className="text-2xl font-bold text-green-600 bg-green-100 px-6 py-3 rounded-full"
+            >
+              BINGO!
+            </motion.div>
+          )}
+
         </div>
       </div>
       <ChampionsSidebar
