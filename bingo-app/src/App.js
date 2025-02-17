@@ -471,14 +471,14 @@ export default function Bingo() {
           <div className="w-1/2">
             <div className="grid gap-2" style={{ 
               gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
-              width: `${gridSize * 100}px`
+              width: '100%',
+              maxWidth: `${gridSize * 120}px`
             }}>
+
               {grid.map((champion, index) => (
                 <div
                   key={index}
-                  className={`relative aspect-square border rounded-lg flex items-center justify-center ${
-                    marked[index] ? 'bg-green-100' : 'bg-white'
-                  }`}
+                  className="relative aspect-square"
                   onClick={() => handleMark(index)}
                 >
                   {champion && (
@@ -486,15 +486,22 @@ export default function Bingo() {
                       <img 
                         src={`/out/${champion}.png`} 
                         alt={champion} 
-                        className="w-full h-full object-cover rounded-lg"
+                        style={{
+                          width: '100%',
+                          height: '100%'
+                        }}
+                        className="object-cover"
                       />
+
+
                       {marked[index] && (
-                        <div className="absolute inset-0 bg-green-500/50 flex items-center justify-center">
-                          <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div className="absolute inset-0 bg-green-500/50">
+                          <svg className="w-full h-full text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                           </svg>
                         </div>
                       )}
+
                     </>
                   )}
                 </div>
