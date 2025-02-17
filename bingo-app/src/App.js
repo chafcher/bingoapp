@@ -67,7 +67,8 @@ const allChampions = [
   "Zeri", "Ziggs", "Zilean", "Zoe", "Zyra"
 ];
 
-const gridSizes = [5, 6, 7, 8];
+const gridSizes = [5, 6, 7, 8, 9, 10, 11];
+
 
 export default function Bingo() {
   const [isLoading, setIsLoading] = useState(true);
@@ -471,7 +472,8 @@ export default function Bingo() {
                   </div>
 
                   {/* Champion Table */}
-                  <div className="mt-6">
+                  <div className="mt-4">
+
                     <div className="space-y-4 mb-4">
                       <input
                         type="text"
@@ -487,6 +489,7 @@ export default function Bingo() {
                         className="w-full p-2 rounded bg-gray-700 text-white focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
 
+
                         <option value="">All Roles</option>
                         <option value="Top">Top</option>
                         <option value="Jungle">Jungle</option>
@@ -496,7 +499,11 @@ export default function Bingo() {
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-4 gap-2">
+                    <div className="grid grid-cols-5 gap-2 overflow-y-auto bg-gray-700 rounded" style={{ maxHeight: '415px' }}>
+
+
+
+
                       {filteredChampions.map((champ) => (
                         <button
                           key={champ}
@@ -521,11 +528,14 @@ export default function Bingo() {
               
               {/* Right Column */}
               <div className="w-1/2">
-                <div className="grid gap-2" style={{ 
+                <div className="grid gap-2 mx-auto" style={{ 
                   gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
                   width: '100%',
-                  maxWidth: `${gridSize * 120}px`
+                  maxWidth: `${gridSize * (gridSize <= 7 ? 100 : gridSize<=8 ? 90 : gridSize<=9 ? 80 : gridSize <= 10 ? 75 : 68)}px`,
+                  marginTop: gridSize <= 6 ? '2rem' : '2rem'
                 }}>
+
+
 
                   {grid.map((champion, index) => (
                     <div
