@@ -372,9 +372,20 @@ export default function Bingo() {
         onGridSizeChange={handleGridSizeChange}
       />
       
+      {/* Dark overlay with click handler */}
+      <div 
+        className={`fixed inset-0 bg-black/50 transition-opacity duration-300 ${
+          showHistorySidebar ? 'opacity-100' : 'opacity-0 pointer-events-none'
+        }`}
+        onClick={() => setShowHistorySidebar(false)}
+      ></div>
+      
       <div className={`flex-1 p-6 transition-all duration-300 ${
-        showHistorySidebar ? 'blur-sm' : ''
+        showHistorySidebar ? 'brightness-50 pointer-events-none' : ''
       }`}>
+
+
+
         <div className="flex flex-col items-center relative">
         <button
           onClick={() => setShowChampionsSidebar(!showChampionsSidebar)}
