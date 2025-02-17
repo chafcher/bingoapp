@@ -1,4 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
+import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
+
+
 //import Cookies from 'js-cookie';
 import { championRoles } from './data/championRoles';
 
@@ -72,6 +75,10 @@ const gridSizes = [5, 6, 7, 8, 9, 10, 11];
 
 export default function Bingo() {
   const [isLoading, setIsLoading] = useState(true);
+  const [isDarkMode, setIsDarkMode] = useState(true);
+
+
+
   const [showHistorySidebar, setShowHistorySidebar] = useState(false);
   const [gridSize, setGridSize] = useState(5);
   const [activeGridSize, setActiveGridSize] = useState(5);
@@ -362,7 +369,8 @@ export default function Bingo() {
     }
 
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex`}>
+
         <button
           onClick={() => setShowHistorySidebar(!showHistorySidebar)}
           className={`fixed top-4 left-4 p-2 bg-primary hover:bg-secondary text-white rounded-lg shadow-md z-50 transition-all duration-300`}
@@ -396,7 +404,8 @@ export default function Bingo() {
             <div className="w-1/2">
               <div className="flex flex-col items-center relative">
 
-                <h1 className="text-3xl font-bold text-gray-800 mb-6">Fearless Draft Bingo</h1>
+                <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-6`}>Fearless Draft Bingo</h1>
+
                 <div className="flex items-center gap-3 mb-6">
                   <span className="text-sm font-medium">Selection Phase</span>
                   <Switch
@@ -499,7 +508,8 @@ export default function Bingo() {
                       </select>
                     </div>
 
-                    <div className="grid grid-cols-5 gap-2 overflow-y-auto bg-gray-700 rounded" style={{ maxHeight: '415px' }}>
+                    <div className={`grid grid-cols-5 gap-2 overflow-y-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-700'} rounded`} style={{ maxHeight: '415px' }}>
+
 
 
 
@@ -518,7 +528,8 @@ export default function Bingo() {
                               e.target.src = '/fallback-champion-icon.png';
                             }}
                           />
-                          <span className="text-xs text-center text-gray-300">{champ}</span>
+                          <span className={`text-xs text-center ${isDarkMode ? 'text-gray-200' : 'text-gray-300'}`}>{champ}</span>
+
                         </button>
                       ))}
                     </div>
