@@ -533,7 +533,13 @@ export default function Bingo() {
                       className="relative aspect-square"
                       onClick={() => handleMark(index)}
                     >
+                      {!champion && (
+                        <div className="absolute inset-0 flex items-center justify-center bg-gray-100/50">
+                          <span className="text-2xl font-bold text-gray-400">?</span>
+                        </div>
+                      )}
                       {champion && (
+
                         <>
                           <img 
                             src={`/out/${champion}.png`} 
