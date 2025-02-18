@@ -379,6 +379,14 @@ export default function Bingo() {
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
           </svg>
         </button>
+
+        <button
+          onClick={() => setIsDarkMode(!isDarkMode)}
+          className="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-700 transition-colors z-50"
+        >
+          {isDarkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
+        </button>
+
         
         <HistorySidebar
           isOpen={showHistorySidebar}
