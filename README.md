@@ -1,6 +1,6 @@
 # Fearless Draft Bingo
 
-A web-based bingo game for League of Legends players to track champion picks during drafts.
+A web-based bingo game for League of Legends viewers to track champion picks during drafts.
 
 ## Features
 
