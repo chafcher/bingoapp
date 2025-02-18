@@ -369,7 +369,8 @@ export default function Bingo() {
     }
 
     return (
-      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex`}>
+      <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row`}>
+
 
         <button
           onClick={() => setShowHistorySidebar(!showHistorySidebar)}
@@ -382,8 +383,9 @@ export default function Bingo() {
 
         <button
           onClick={() => setIsDarkMode(!isDarkMode)}
-          className="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-700 transition-colors z-50"
+          className="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-700 transition-colors z-50 w-10 h-10 flex items-center justify-center"
         >
+
           {isDarkMode ? <SunIcon className="h-6 w-6" /> : <MoonIcon className="h-6 w-6" />}
         </button>
 
@@ -407,14 +409,17 @@ export default function Bingo() {
         <div className={`flex-1 p-6 transition-all duration-300 ${
           showHistorySidebar ? 'brightness-50 pointer-events-none' : ''
         }`}>
-          <div className="flex gap-8">
+          <div className="flex flex-col md:flex-row gap-4 md:gap-8 p-4 md:p-6">
             {/* Left Column */}
-            <div className="w-1/2">
+            <div className="w-full md:w-1/2">
+
               <div className="flex flex-col items-center relative">
 
-                <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-6`}>Fearless Draft Bingo</h1>
+                <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Fearless Draft Bingo</h1>
 
-                <div className="flex items-center gap-3 mb-6">
+
+                <div className="flex items-center gap-3 mb-4">
+
                   <span className="text-sm font-medium">Selection Phase</span>
                   <Switch
                     checked={phase === PHASE.PLAYING}
@@ -489,9 +494,9 @@ export default function Bingo() {
                   </div>
 
                   {/* Champion Table */}
-                  <div className="mt-4">
+                  <div className="mt-5">
 
-                    <div className="space-y-4 mb-4">
+                    <div className="space-y-1 mb-4">
                       <input
                         type="text"
                         placeholder="Search champions..."
@@ -516,7 +521,8 @@ export default function Bingo() {
                       </select>
                     </div>
 
-                    <div className={`grid grid-cols-5 gap-2 overflow-y-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-700'} rounded`} style={{ maxHeight: '415px' }}>
+                <div className={`grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 overflow-y-auto ${isDarkMode ? 'bg-gray-800' : 'bg-gray-700'} rounded`} style={{ maxHeight: '415px' }}>
+
 
 
 
@@ -546,12 +552,13 @@ export default function Bingo() {
               </div>
               
               {/* Right Column */}
-              <div className="w-1/2">
+              <div className="w-full md:w-1/2 mt-4 md:mt-0">
+
                 <div className="grid gap-2 mx-auto" style={{ 
                   gridTemplateColumns: `repeat(${gridSize}, minmax(0, 1fr))`,
                   width: '100%',
-                  maxWidth: `${gridSize * (gridSize <= 7 ? 100 : gridSize<=8 ? 90 : gridSize<=9 ? 80 : gridSize <= 10 ? 75 : 68)}px`,
-                  marginTop: gridSize <= 6 ? '2rem' : '2rem'
+                  maxWidth: `${gridSize * (gridSize <= 7 ? 100 : gridSize<=8 ? 90 : gridSize<=9 ? 80 : gridSize <= 10 ? 75 : 65)}px`,
+                  //marginTop: gridSize <= 6 ? '2rem' : '2rem'
                 }}>
 
 
