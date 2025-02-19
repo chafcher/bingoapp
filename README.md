@@ -13,13 +13,13 @@ A web-based bingo game for League of Legends viewers to track champion picks dur
 
 ## How to Play
 
-1. Choose a grid size that suits your needs
-2. Select the Selection Phase
-3. Select champions from the list to fill your grid
-4. Randomize the grid when ready
-5. Switch to Playing Phase
-6. Mark champions as they are picked
-7. Get BINGO by completing a row, column or diagonal
+1. Choose Grid Size: Select a grid size that suits your needs.
+2. Pick Selection Phase: Choose the phase in which you'll select your champions.
+3. Fill the Grid: Either select/search for champions from the list to fill your grid or use the random grid option for automatic selection.
+4. Randomize the Grid (Optional): Shuffle the grid to change the champion positions.
+5. Switch to Playing Phase: Once you're ready, switch to the Playing Phase.
+6. Mark Selected Champions: As champions are picked, mark them on your grid.
+7. Achieve BINGO: Complete a row, column, or diagonal to get BINGO!
 
 ## Technologies Used
 

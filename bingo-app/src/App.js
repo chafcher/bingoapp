@@ -372,12 +372,14 @@ export default function Bingo() {
               <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Fearless Draft Bingo</h1>
 
               <div className="flex items-center gap-3 mb-4">
-                <span className="text-sm font-medium">Selection Phase</span>
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Selection Phase</span>
+
                 <Switch
                   checked={phase === PHASE.PLAYING}
                   onChange={(checked) => setPhase(checked ? PHASE.PLAYING : PHASE.SELECTION)}
                 />
-                <span className="text-sm font-medium">Playing Phase</span>
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Playing Phase</span>
+
               </div>
 
               <div className="flex gap-3 mb-6">
@@ -385,7 +387,8 @@ export default function Bingo() {
                   <Button 
                     key={size} 
                     onClick={() => handleGridSizeChange(size)}
-                    className={size === activeGridSize ? 'bg-blue-500' : ''}>
+                    className={`${size === activeGridSize ? 'bg-blue-500' : ''} ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>
+
                     {size}x{size}
                   </Button>
                 ))}
