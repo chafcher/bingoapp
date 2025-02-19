@@ -35,7 +35,7 @@ With the introduction of Fearless Draft in major leagues, I thought it would be 
 
 ## Special Thanks
 
-The team running [CommunityDragon](https://communitydragon.org/) for maintaining such a complete archive of game files. This project wouldn't exist without them.
+The team running [CommunityDragon](https://communitydragon.org/) for maintaining such a complete archive of game files. I used CDN to grab the champions icons.
 
 [VeigarV2](https://x.com/Veigar_v2) for the inspiration.
 
