@@ -30,7 +30,7 @@ A web-based bingo game for League of Legends viewers to track champion picks dur
 
 ## Special Thanks
 
-The team running CommunityDragon for maintaining such a complete archive of game files. This project wouldn't exist without them.
+The team running [CommunityDragon](https://communitydragon.org/) for maintaining such a complete archive of game files. This project wouldn't exist without them.
 
 
 ## Contributing
