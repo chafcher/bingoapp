@@ -70,6 +70,8 @@ const gridSizes = [5, 6, 7, 8, 9, 10, 11];
 export default function Bingo() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
+  const [showHowToPlayModal, setShowHowToPlayModal] = useState(false);
+
   const [gridSize, setGridSize] = useState(5);
   const [activeGridSize, setActiveGridSize] = useState(5);
   const [phase, setPhase] = useState(PHASE.SELECTION);
@@ -94,7 +96,9 @@ export default function Bingo() {
 
   // Load saved state on initial render
   useEffect(() => {
+    setShowHowToPlayModal(true);
     const savedState = loadState();
+
     if (savedState) {
       const size = savedState.gridSize || 5;
       setGridSize(size);
@@ -369,17 +373,17 @@ export default function Bingo() {
           {/* Left Column */}
           <div className="w-full md:w-1/2">
             <div className="flex flex-col items-center relative">
-              <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'} mb-4`}>Fearless Draft Bingo</h1>
-
-              <div className="flex items-center gap-3 mb-4">
-                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Selection Phase</span>
-
-                <Switch
-                  checked={phase === PHASE.PLAYING}
-                  onChange={(checked) => setPhase(checked ? PHASE.PLAYING : PHASE.SELECTION)}
-                />
-                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Playing Phase</span>
-
+              <div className="flex items-center gap-4">
+                <h1 className={`text-3xl font-bold ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Fearless Draft Bingo</h1>
+                <button
+                  onClick={() => setShowHowToPlayModal(true)}
+                  className="p-2 rounded-full hover:bg-gray-700 transition-colors"
+                  title="How to Play"
+                >
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </button>
               </div>
 
               <div className="flex gap-3 mb-6">
@@ -393,6 +397,18 @@ export default function Bingo() {
                   </Button>
                 ))}
               </div>
+
+              <div className="flex items-center gap-3 mb-4">
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Selection Phase</span>
+
+                <Switch
+                  checked={phase === PHASE.PLAYING}
+                  onChange={(checked) => setPhase(checked ? PHASE.PLAYING : PHASE.SELECTION)}
+                />
+                <span className={`text-sm font-medium ${isDarkMode ? 'text-white' : 'text-gray-800'}`}>Playing Phase</span>
+
+              </div>
+
 
               <div className="flex gap-3 mb-6">
                 <Tooltip 
@@ -539,7 +555,52 @@ export default function Bingo() {
             </div>
 
             <Modal
+              isOpen={showHowToPlayModal}
+              onClose={() => setShowHowToPlayModal(false)}
+              title="How to Play"
+              actions={[
+                {
+                  label: 'Got it!',
+                  onClick: () => setShowHowToPlayModal(false),
+                  variant: 'primary',
+                },
+              ]}
+            >
+              <div className="space-y-4">
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">1</span>
+                  <p>Choose Grid Size: Select a grid size that suits your needs.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">2</span>
+                  <p>Pick Selection Phase: Choose the phase in which you'll select your champions.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">3</span>
+                  <p>Fill the Grid: Either select/search for champions from the list to fill your grid or use the random grid option for automatic selection.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">4</span>
+                  <p>Randomize the Grid (Optional): Shuffle the grid to change the champion positions.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">5</span>
+                  <p>Switch to Playing Phase: Once you're ready, switch to the Playing Phase.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">6</span>
+                  <p>Mark Selected Champions: As champions are picked, mark them on your grid.</p>
+                </div>
+                <div className="flex items-start gap-4">
+                  <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">7</span>
+                  <p>Achieve BINGO: Complete a row, column, or diagonal to get BINGO!</p>
+                </div>
+              </div>
+            </Modal>
+
+            <Modal
               isOpen={showRemoveModal}
+
               onClose={() => setShowRemoveModal(false)}
               title="Remove Champion"
               actions={[
