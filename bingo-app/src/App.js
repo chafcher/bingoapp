@@ -71,7 +71,6 @@ export default function Bingo() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDarkMode, setIsDarkMode] = useState(true);
   const [showHowToPlayModal, setShowHowToPlayModal] = useState(false);
-
   const [gridSize, setGridSize] = useState(5);
   const [activeGridSize, setActiveGridSize] = useState(5);
   const [phase, setPhase] = useState(PHASE.SELECTION);
