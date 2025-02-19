@@ -15,6 +15,7 @@
     "react-dom": "^19.0.0",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
+    
   },
   "scripts": {
     "start": "react-scripts start",
@@ -44,6 +45,7 @@
     "@tailwindcss/postcss": "^4.0.6",
     "@tailwindcss/postcss7-compat": "^2.2.17",
     "autoprefixer": "^9.8.8",
+    "gh-pages": "^6.3.0",
     "postcss": "^8.5.2",
     "postcss-loader": "^8.1.1",
     "tailwindcss": "^4.0.6"

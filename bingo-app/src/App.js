@@ -1,9 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { SunIcon, MoonIcon } from "@heroicons/react/24/solid";
-
-//import Cookies from 'js-cookie';
 import { championRoles } from './data/championRoles';
-
 import Tooltip from "./components/ui/Tooltip";
 import Toast from "./components/ui/Toast";
 import { motion } from "framer-motion";
@@ -11,7 +8,6 @@ import Switch from "./components/ui/Switch";
 import Button from "./components/ui/Button";
 import Modal from "./components/ui/Modal";
 
-//import ChampionsSidebar from "./components/ChampionsSidebar";
 
 // State management utilities
 const STORAGE_KEY = 'bingoState';
