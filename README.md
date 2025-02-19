@@ -1,4 +1,4 @@
-# Fearless Draft Bingo
+# [Fearless Draft Bingo](https://fearlessdraftbingo.vercel.app/)
 
 A web-based bingo game for League of Legends viewers to track champion picks during drafts.
 
