@@ -2,6 +2,11 @@
 
 A web-based bingo game for League of Legends viewers to track champion picks during drafts.
 
+## Idea
+
+With the introduction of Fearless Draft in major leagues, I thought it would be a fun idea to create a Bingo game to predict champion picks and track them in real time. This app allows you to set up a grid, select champions, and follow along as teams make their picks. Whether you're competing with friends or just testing your prediction skills, this adds an extra layer of excitement to the drafting experience!
+
+
 ## Features
 
 - Customizable grid sizes (5x5 to 11x11)
@@ -31,7 +36,7 @@ A web-based bingo game for League of Legends viewers to track champion picks dur
 ## Special Thanks
 
 The team running [CommunityDragon](https://communitydragon.org/) for maintaining such a complete archive of game files. This project wouldn't exist without them.
-
+[VeigarV2](https://x.com/Veigar_v2) for the inspiration.
 
 ## Contributing
 
