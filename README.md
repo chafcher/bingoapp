@@ -28,17 +28,10 @@ A web-based bingo game for League of Legends viewers to track champion picks dur
 - Framer Motion (for animations)
 - LocalStorage (for state persistence)
 
-## Installation
+## Special Thanks
 
-1. Clone the repository
-2. Install dependencies:
-```bash
-npm install
-```
-3. Start the development server:
-```bash
-npm run dev
-```
+The team running CommunityDragon for maintaining such a complete archive of game files. This project wouldn't exist without them.
+
 
 ## Contributing
 
