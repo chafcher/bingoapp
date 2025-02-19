@@ -94,7 +94,17 @@ export default function Bingo() {
     })
     .sort(), [searchQuery, selectedRole]);
 
+  // Handle dark mode class on HTML element
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, [isDarkMode]);
+
   // Load saved state on initial render
+
   useEffect(() => {
     setShowHowToPlayModal(true);
     const savedState = loadState();
@@ -360,7 +370,9 @@ export default function Bingo() {
   }
 
   return (
+
     <div className={`min-h-screen ${isDarkMode ? 'bg-gray-900' : 'bg-gray-50'} flex flex-col md:flex-row`}>
+
       <button
         onClick={() => setIsDarkMode(!isDarkMode)}
         className="fixed top-4 right-4 p-2 bg-gray-800 text-white rounded-full shadow-md hover:bg-gray-700 transition-colors z-50 w-10 h-10 flex items-center justify-center"
@@ -566,7 +578,7 @@ export default function Bingo() {
                 },
               ]}
             >
-              <div className="space-y-4">
+              <div className={`space-y-4 ${isDarkMode ? 'text-white' : 'text-black'}`}>
                 <div className="flex items-start gap-4">
                   <span className="w-6 h-6 flex items-center justify-center bg-blue-500 text-white rounded-full">1</span>
                   <p>Choose Grid Size: Select a grid size that suits your needs.</p>
@@ -596,6 +608,7 @@ export default function Bingo() {
                   <p>Achieve BINGO: Complete a row, column, or diagonal to get BINGO!</p>
                 </div>
               </div>
+
             </Modal>
 
             <Modal
